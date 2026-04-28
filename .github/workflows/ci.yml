@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Lint
+        run: python -m ruff check bot admin tests
+      - name: Type check
+        run: python -m mypy bot/app/utils bot/app/services admin/app/schemas
+      - name: Compile
+        run: python -m compileall bot admin tests migrations
+      - name: Tests
+        run: python -m pytest -q

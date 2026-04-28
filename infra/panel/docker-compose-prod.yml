@@ -1,0 +1,88 @@
+services:
+  panel:
+    image: remnawave/backend:2.7.4
+    container_name: remnawave
+    env_file:
+      - ../../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [panel_net]
+    read_only: true
+    tmpfs: [/tmp]
+
+  postgres:
+    image: postgres:17.6
+    container_name: panel-postgres
+    environment:
+      POSTGRES_DB: ${PANEL_POSTGRES_DB}
+      POSTGRES_USER: ${PANEL_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PANEL_POSTGRES_PASSWORD}
+    command: ["postgres", "-c", "max_connections=300", "-c", "shared_buffers=512MB"]
+    volumes:
+      - panel_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PANEL_POSTGRES_USER} -d ${PANEL_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [panel_net]
+
+  redis:
+    image: redis:7.4.5-alpine
+    container_name: panel-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${PANEL_REDIS_PASSWORD}"]
+    volumes:
+      - panel_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${PANEL_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [panel_net]
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    container_name: panel-caddy
+    depends_on:
+      panel:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - panel_caddy_data:/data
+      - panel_caddy_config:/config
+    restart: unless-stopped
+    networks: [panel_net,edge_net]
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.4.0
+    container_name: panel-cloudflared
+    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
+    restart: unless-stopped
+    depends_on:
+      caddy:
+        condition: service_started
+    networks: [edge_net]
+
+networks:
+  panel_net:
+    internal: true
+  edge_net:
+
+volumes:
+  panel_pg_data:
+  panel_redis_data:
+  panel_caddy_data:
+  panel_caddy_config:
