@@ -1,0 +1,55 @@
+[project]
+name = "remnawave-vpn-pro"
+version = "0.1.0"
+description = "Production-ready VPN sales platform on Remnawave"
+requires-python = ">=3.12"
+dependencies = [
+  "aiogram==3.22.0",
+  "fastapi==0.116.1",
+  "uvicorn[standard]==0.35.0",
+  "sqlalchemy==2.0.43",
+  "alembic==1.16.5",
+  "asyncpg==0.30.0",
+  "pydantic==2.11.9",
+  "pydantic-settings==2.11.0",
+  "httpx==0.28.1",
+  "redis==6.4.0",
+  "structlog==25.4.0",
+  "python-dotenv==1.1.1",
+  "jinja2==3.1.6",
+  "itsdangerous==2.2.0",
+  "slowapi==0.1.9",
+  "prometheus-client==0.23.1",
+  "tenacity==9.1.2",
+  "remnawave==2.1.0",
+  "orjson==3.11.3",
+  "pytest==8.4.2",
+  "ruff==0.13.0",
+  "mypy==1.17.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E","F","I","UP","B","SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_configs = true
+plugins = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[[tool.mypy.overrides]]
+module = [
+  "bot.app.services.*",
+  "bot.app.utils.*",
+  "admin.app.schemas.*",
+]
+disallow_untyped_defs = false
+disallow_any_generics = false
+warn_return_any = false

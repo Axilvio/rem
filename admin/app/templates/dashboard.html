@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>VPN Pro Admin</title>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+  <main class="max-w-6xl mx-auto p-8 space-y-6">
+    <h1 class="text-3xl font-bold">Remnawave VPN Pro Dashboard</h1>
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="p-4 bg-slate-900 rounded-xl">Пользователи: {{ data.users }}</div>
+      <div class="p-4 bg-slate-900 rounded-xl">Активные: {{ data.active_subscriptions }}</div>
+      <div class="p-4 bg-slate-900 rounded-xl">Ноды: {{ data.nodes }}</div>
+      <div class="p-4 bg-slate-900 rounded-xl">MRR: ${{ data.monthly_revenue }}</div>
+    </div>
+    <div class="text-sm text-slate-400">Updated: {{ data.updated_at }}</div>
+    <div class="rounded-xl border border-slate-800 p-4">
+      <h2 class="font-semibold mb-2">Operations</h2>
+      <ul class="list-disc list-inside text-sm space-y-1">
+        <li>/api/health endpoint for liveness probes</li>
+        <li>Security headers enforced in middleware</li>
+        <li>Cloudflare Tunnel expected for external access</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

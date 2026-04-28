@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: remnawave-panel
+    static_configs:
+      - targets: ["panel.example.com:443"]
+  - job_name: remnawave-node
+    static_configs:
+      - targets: ["node-eu.example.com:2222", "node-ru.example.com:2222", "node-alt.example.com:2222"]

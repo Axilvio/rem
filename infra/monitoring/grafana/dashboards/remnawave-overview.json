@@ -1,0 +1,1 @@
+{"title":"Remnawave Overview","panels":[{"type":"timeseries","title":"Node RX","targets":[{"expr":"remnawave_node_network_rx_bytes_per_sec"}]},{"type":"timeseries","title":"Node CPU load 5m","targets":[{"expr":"remnawave_node_cpu_load_avg_5m"}]}],"schemaVersion":39,"version":1}

@@ -1,0 +1,67 @@
+name: remnawave-vpn-pro
+services:
+  bot:
+    build: ./bot
+    env_file: .env
+    depends_on:
+      bot-db:
+        condition: service_healthy
+      bot-redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [backend]
+
+  admin:
+    build: ./admin
+    env_file: .env
+    depends_on:
+      admin-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [backend]
+
+  bot-db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: bot
+      POSTGRES_USER: bot
+      POSTGRES_PASSWORD: ${PANEL_POSTGRES_PASSWORD}
+    volumes: [bot_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bot -d bot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
+
+  admin-db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: admin
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${PANEL_POSTGRES_PASSWORD}
+    volumes: [admin_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
+
+  bot-redis:
+    image: redis:7.4.5-alpine
+    command: ["redis-server", "--requirepass", "${PANEL_REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${PANEL_REDIS_PASSWORD}", "PING"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [backend]
+
+volumes:
+  bot_db:
+  admin_db:
+
+networks:
+  backend:
+    internal: true
