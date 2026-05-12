@@ -149,8 +149,8 @@ async def group_member_changed(
     if str(event.chat.id) != str(settings.target_chat_id):
         return
     user = event.new_chat_member.user
-    old_allowed = event.old_chat_member.status in {"creator", "administrator", "member"}
-    new_allowed = event.new_chat_member.status in {"creator", "administrator", "member"}
+    old_allowed = _chat_member_update_is_member(event.old_chat_member)
+    new_allowed = _chat_member_update_is_member(event.new_chat_member)
     if old_allowed and not new_allowed:
         async with sessionmaker() as session:
             subscription = await session.scalar(
@@ -175,6 +175,15 @@ async def group_member_changed(
                         f"{user.id} (@{user.username or 'нет'})"
                     ),
                 )
+
+
+def _chat_member_update_is_member(member: object) -> bool:
+    status = getattr(member, "status", None)
+    if status in {"creator", "administrator", "member"}:
+        return True
+    if status == "restricted":
+        return bool(getattr(member, "is_member", False))
+    return False
 
 
 async def revoke_subscription(

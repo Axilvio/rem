@@ -50,7 +50,8 @@ class RemnawaveClient:
 
     async def get_all_internal_squad_uuids(self) -> list[str]:
         payload = await self._request("GET", "/internal-squads")
-        squads = payload.get("internalSquads", []) if isinstance(payload, dict) else []
+        response = self._unwrap_response(payload)
+        squads = response.get("internalSquads", []) if isinstance(response, dict) else []
         uuids = [str(squad["uuid"]) for squad in squads if squad.get("uuid")]
         if not uuids:
             raise RemnawaveError("No internal squads returned by Remnawave API")
@@ -58,7 +59,9 @@ class RemnawaveClient:
 
     async def get_user_by_username(self, username: str) -> dict[str, Any] | None:
         payload = await self._request("GET", f"/users/by-username/{username}")
-        return payload if isinstance(payload, dict) else None
+        if payload is None:
+            return None
+        return self._extract_user(payload, "getting Remnawave user by username")
 
     async def create_or_get_user(
         self, telegram_id: int, telegram_username: str | None
@@ -83,16 +86,15 @@ class RemnawaveClient:
             "tag": "TELEGRAM",
         }
         payload = await self._request("POST", "/users", json=body)
-        if not isinstance(payload, dict):
-            raise RemnawaveError("Unexpected empty response when creating Remnawave user")
-        return payload
+        return self._extract_user(payload, "creating Remnawave user")
 
     async def delete_user(self, remnawave_user_uuid: str) -> bool:
         payload = await self._request("DELETE", f"/users/{remnawave_user_uuid}")
         if payload is None:
             return True
-        if isinstance(payload, dict):
-            return bool(payload.get("isDeleted", True))
+        response = self._unwrap_response(payload)
+        if isinstance(response, dict):
+            return bool(response.get("isDeleted", True))
         return True
 
     def subscription_url(self, user: dict[str, Any]) -> str:
@@ -112,3 +114,16 @@ class RemnawaveClient:
     def _description(telegram_id: int, telegram_username: str | None) -> str:
         username = f"@{telegram_username}" if telegram_username else "без username"
         return f"Telegram bot user: {telegram_id} ({username})"
+
+    @staticmethod
+    def _unwrap_response(payload: Any) -> Any:
+        if isinstance(payload, dict) and "response" in payload:
+            return payload["response"]
+        return payload
+
+    @classmethod
+    def _extract_user(cls, payload: Any, action: str) -> dict[str, Any]:
+        response = cls._unwrap_response(payload)
+        if isinstance(response, dict):
+            return response
+        raise RemnawaveError(f"Unexpected Remnawave API response while {action}")
